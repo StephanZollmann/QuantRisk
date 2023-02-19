@@ -5,7 +5,7 @@ Covers Value at Risk (VaR) and Conditional Value at Risk (CVaR) measures based o
 
 If you notice any errors or have any questions/suggestions, please reach out via LinkedIn! ***https://www.linkedin.com/in/stephanzollmann/*** 
 
-Next steps:
+Potential improvements:
 - [ ] use more sophisticated volatility models instead of basic garch models e.g. HAR
 - [ ] functionality to parse multiple assets in one go
 - [ ] improve documentation of classes. Currently no docstrings for individual methods.
