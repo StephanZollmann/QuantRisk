@@ -13,7 +13,7 @@ from quant_risk_util import *
 
 #%% Query Data
 
-symbol = "^GDAXI"
+symbol = "^GDAXI" #Alternatives e.g. Deutsche Bank (DBK.DE)
 start = dt.datetime(2012,12,31)
 end = dt.datetime(2022,12,31)
 
@@ -23,7 +23,7 @@ data = query_price_data(symbol, start, end)
 backtesting_start = '2020'
 backtesting_end = '2022'
 investment = 1e6
-alpha = 0.1
+alpha = 0.01
 #%% Create VaR & CVaR based on assumptions/computations of the loss distribution
 
 start_date = "2020"
