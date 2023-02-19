@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 17 19:46:13 2023
-
-@author: Stephan
-"""
+# Risk measures util
+# Author: Stephan Zollmann
 
 import pandas as pd
 pd.options.mode.chained_assignment = None
@@ -377,8 +373,7 @@ class BacktestingGarch(Backtesting):
             nu = self.modelling_results["err_term_degrees"][name]
             q_parametric = - model.distribution.ppf(self.alpha, nu)
             
-            VaR_parametric = mean + np.sqrt(var).values * q_parametric
-            # Save VaR in a DataFrame
+            VaR_parametric = mean + np.sqrt(var).values * q_parametric            
             VaR_parametric = pd.Series(VaR_parametric, index = mean.index)
             
             self.rolled_VaRs[name] = VaR_parametric

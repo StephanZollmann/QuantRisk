@@ -1,31 +1,29 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 14 15:15:33 2023
+# Risk measures
+# Author: Stephan Zollmann
 
-@author: szollmann
-"""
-
+# import packages
 import pandas as pd
 pd.options.mode.chained_assignment = None
 import datetime as dt
 from arch import arch_model
-from start_func import *
+
+# import own functions
+from quant_risk_util import *
 
 
 #%% Query Data
 
-data = query_price_data(symbol = "^GDAXI",
-                        start = dt.datetime(2012,12,31),
-                        end = dt.datetime(2022,12,31))
+symbol = "^GDAXI"
+start = dt.datetime(2012,12,31)
+end = dt.datetime(2022,12,31)
 
-
+data = query_price_data(symbol, start, end)
 #%% Global params
 
 backtesting_start = '2020'
 backtesting_end = '2022'
 investment = 1e6
 alpha = 0.1
-     
 #%% Create VaR & CVaR based on assumptions/computations of the loss distribution
 
 start_date = "2020"
@@ -34,9 +32,9 @@ end_date = data[-1:].index.item()
 dax_risk_dist_2020 = StaticRiskMeasures(data, 0.01, start_date, end_date)  
 dax_risk_dist_2020.compute_all()
 
+print("Show VaR & CVaR for the DAX for a fixed window: ")
 print(dax_risk_dist_2020.measures)
-        
-
+print("\n")
 #%% Backtest the distribution based VaR by comparing the number of violations and computing a loss function
 
 rolling_window = 252
@@ -50,9 +48,13 @@ dax_risk_dist_backtesting_eval.plot_vars()
 dax_risk_dist_backtesting_eval.compute_violations()
 dax_risk_dist_backtesting_eval.loss_function()
 
+print("Show distribution based VaR backtesting results:")
+print("Actual VaR violations vs expectation given alpha")
 print(dax_risk_dist_backtesting_eval.violation_result)
+print("\n")
+print("Q-measure results (smaller Q indicates better fit)")
 print(dax_risk_dist_backtesting_eval.q_measure)
-
+print("\n")
 #%% Estimate simple garch models to forecast volatility
 
 
@@ -72,7 +74,7 @@ model_fitting_start = "2018" # implies 2 years or 2 * 252 days to estimate each 
 modelling_results = garch_modelling(models, backtesting_start, model_fitting_start)
 #%% Backtest a dynamic VaR forecast (trough volatility prediction)
 
-# Instaniate Backtesting of garch results
+# Instantiate Backtesting of garch results
 dax_risk_garch_backtesting = BacktestingGarch(data, backtesting_start, backtesting_end, investment, alpha, models, modelling_results)
 dax_risk_garch_backtesting.compare_vars()
 
@@ -82,7 +84,15 @@ dax_risk_garch_backtesting_eval.plot_vars()
 dax_risk_garch_backtesting_eval.compute_violations()
 dax_risk_garch_backtesting_eval.loss_function()
 
+print("Show garch based VaR backtesting results:")
+print("Actual VaR violations vs expectation given alpha")
 print(dax_risk_garch_backtesting_eval.violation_result)
+print("\n")
+print("Q-measure results (smaller Q indicates better fit)")
 print(dax_risk_garch_backtesting_eval.q_measure)
+print("\n")
+
+
+
 
 
