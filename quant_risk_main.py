@@ -57,7 +57,6 @@ print(dax_risk_dist_backtesting_eval.q_measure)
 print("\n")
 #%% Estimate simple garch models to forecast volatility
 
-
 #always leave rescale at True otherwise convergence of optimization may fail
 basic_gm = arch_model(data['Return'], p = 1, q = 1,
                       mean = 'constant', vol = 'GARCH', dist = 't', rescale = True)
@@ -69,7 +68,7 @@ exp_gm = arch_model(data['Return'], p = 1, q = 1, o = 1,
 models = [("GARCH_1_1", basic_gm), ("EGARCH_1_1_1", exp_gm)]
 
 
-model_fitting_start = "2018" # implies 2 years or 2 * 252 days to estimate each model
+model_fitting_start = "2018" # implies starting with 2 years of estimation data to forecast (expanding window though)
 
 modelling_results = garch_modelling(models, backtesting_start, model_fitting_start)
 #%% Backtest a dynamic VaR forecast (trough volatility prediction)
@@ -91,8 +90,4 @@ print("\n")
 print("Q-measure results (smaller Q indicates better fit)")
 print(dax_risk_garch_backtesting_eval.q_measure)
 print("\n")
-
-
-
-
 

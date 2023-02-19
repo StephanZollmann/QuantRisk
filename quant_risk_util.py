@@ -35,7 +35,7 @@ def timing_decorator(func):
         result = func(*args, **kwargs)
         
         print("Time elapsed: {} seconds".format(round(time.time() - start_time)))
-        
+        print("\n")
         return result
     return wrapper
 
@@ -284,20 +284,21 @@ class BacktestingEval:
         
     def compute_violations(self):
         
-        self.violation_result = {}
+        self._violation_result = {}
         
         for col in self.VaR_measures.columns:
             
-            self.violation_result[col] = np.sum(self.VaR_measures[col] < self.pnl)
+            self._violation_result[col] = np.sum(self.VaR_measures[col] < self.pnl)
         
-        self.violation_result["Expected"] = self.alpha * self.VaR_measures.shape[0]
+        self._violation_result["Expected"] = self.alpha * self.VaR_measures.shape[0]
+        self.violation_result = pd.DataFrame.from_dict(self._violation_result, orient = "index", columns = ["Violations"])
                         
     def loss_function(self):
         """
         asymmetric loss function after Gonzales, Lee & Mishra (2004)
         """
         self.detailed_tables = {}
-        self.q_measure = {}
+        self._q_measure = {}
         
         for col in self.VaR_measures.columns:
                        
@@ -306,7 +307,8 @@ class BacktestingEval:
             weight = self.alpha - violation_indicator
             weighted_deviation = deviation * weight
             
-            self.q_measure[col] = np.round(np.mean(weighted_deviation), 3)
+            self._q_measure[col] = np.round(np.mean(weighted_deviation), 3)
+            self.q_measure = pd.DataFrame.from_dict(self._q_measure, orient = "index", columns = ["Q-Measure"])
 
             table = pd.concat([self.VaR_measures[col], self.pnl, deviation, violation_indicator, weight, weighted_deviation], axis = 1)
             table.columns = ["VaR", "PnL", "Deviation", "violation_indicator", "weight", "Weighted_deviation"]
@@ -325,7 +327,8 @@ def garch_modelling(models, backtesting_start, estimation_start):
         
         model_result = model.fit(first_obs = estimation_start)
         err_term_df[name] = model_result.params.nu
-        model_forecast = model_result.forecast(start = backtesting_start, horizon = 1) #forecast one day ahead
+        model_forecast = model_result.forecast(start = backtesting_start, horizon = 1, #forecast one day ahead
+                                               reindex=False) #silence legacy behavior warning
         model_var = model_forecast.variance.dropna() / np.power(model_result.scale, 2)
         model_mean = model_forecast.mean.dropna()
         
