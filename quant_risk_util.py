@@ -23,7 +23,8 @@ from sklearn.metrics import mean_squared_error
 #import matplotlib.dates as mdates
 
 
-def timing_decorator(func):
+def timing_decorator(func):  
+    "Small decorator to time functions and print them when they are called."
     
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -47,6 +48,28 @@ class InvalidIndexException(Exception):
 
 @timing_decorator
 def query_price_data(symbol, start, end):
+    """
+    
+    Parameters
+    ----------
+    symbol : str
+        Symbol (yahoo finance) of the asset to be queried.
+    start : datetime
+        Start date of data to query.
+    end : datetime
+        End date of data to query.
+
+    Raises
+    ------
+    InvalidIndexException
+        Raised when the queried data does not have a datetime index.
+
+    Returns
+    -------
+    asset_data : df
+        Returns a dataframe with the price history of the specified asset.
+
+    """
     
     data = web.DataReader(symbol, start, end)
     
@@ -66,6 +89,23 @@ def query_price_data(symbol, start, end):
 
 class RiskMeasures:
     
+    """
+    A class used to represent general Risk measures such as VaR and CVar.
+    
+    --------------------------------------------------------------------
+
+    Attributes
+    ----------
+    data : DataFrame
+        Dataframe of the price history of an asset
+    losses : Series
+        Series of the losses of the asset.
+    alpha : int/float
+        alpha for confidence calculations.
+
+    """
+    
+    
     def __init__(self, data, alpha):
         
         self.data = data
@@ -74,6 +114,36 @@ class RiskMeasures:
         self.alpha = alpha
 
 class StaticRiskMeasures(RiskMeasures):
+    
+    """
+    A subclass of RiskMeasures to represent distribution based Risk measures.
+
+    ------------------------------------------------------------------------
+
+    Attributes
+    ----------
+    data : DataFrame
+        Dataframe of the price history of an asset.
+    losses : Series
+        Series of the losses of the asset.
+    alpha : int/float
+        alpha for confidence calculations.
+    start_date : Str/Datetime
+        Specify start of estimation window.
+    end_date : Str/Datetime
+        Specify end of estimation window.
+
+    Methods
+    -------
+    compute_measures_normal
+        Computes VaR & CVaR by assuming a normal loss distribution.
+    compute_measures_empirical
+        Computes VaR & CVaR by fitting an empirical loss distribution.
+    compute_measures_fitted_t
+        Computes VaR & CVaR by fitting a t-distribution to the losses.
+    compute_all
+        calls all computation functions.
+    """
     
     def __init__(self, data, alpha, start_date, end_date):
         super(StaticRiskMeasures, self).__init__(data, alpha)
@@ -156,6 +226,26 @@ class InvalidSamplingException(Exception):
 
 class Backtesting:
     
+    """
+    A class used to represent general backtesting.
+
+    ---------------------------------------------
+
+    Attributes
+    ----------
+    data : DataFrame
+        Dataframe of the price history of an asset
+    backtesting_start : Str/Datetime
+        Start of backtesting window.
+    backtesting_end : Str/Datetime
+        End of backtesting window.
+    investment : Int/float
+        Investment at start of backtesting window.
+    alpha : int/float
+        alpha for confidence calculations.
+
+    """
+    
     def __init__(self, data, backtesting_start, backtesting_end, investment, alpha):       
         
         backtesting_data = data.loc[backtesting_start:backtesting_end]
@@ -169,6 +259,41 @@ class Backtesting:
 
 
 class BacktestingStatic(Backtesting):
+    
+    """
+    A class used to represent backtesting of distribution based VaRs.
+    
+    ----------------------------------------------------------------
+
+    Attributes
+    ----------
+    data : DataFrame
+        Dataframe of the price history of an asset
+    backtesting_start : Str/Datetime
+        Start of backtesting window.
+    backtesting_end : Str/Datetime
+        End of backtesting window.
+    investment : Int/float
+        Investment at start of backtesting window.
+    alpha : int/float
+        alpha for confidence calculations.
+    rolling_window: int
+        Number of days/obs used as estimation window.
+        
+    Methods
+    -------
+    normal_dist
+        Computes rolled VaR by assuming a normal loss distribution.
+    empirical_dist
+        Computes rolled VaR by fitting an empirical loss distribution.
+    fitted_t_dist
+        Computes rolled VaR by fitting a t-distribution to the losses.
+    compute_all
+        calls all computation functions.
+    compare_vars
+        compares value at risk with actual losses (percentage and value based)
+    """
+
     
     def __init__(self, data, backtesting_start, backtesting_end, investment, alpha, rolling_window):
         super(BacktestingStatic, self).__init__(data, backtesting_start, backtesting_end, investment, alpha)
@@ -239,6 +364,29 @@ class BacktestingStatic(Backtesting):
             
 
 class BacktestingEval:
+    
+    """
+    A class used to represent evaluation of all backtesting processes.
+
+    ----------------------------------------------------------------
+
+    Attributes
+    ----------
+    compare_df_val : DataFrame
+        Dataframe of the price history of an asset
+    alpha : int/float
+        alpha for confidence calculations.
+    
+    Methods
+    -------
+    plot_vars
+        Plots the VaR forecasts vs the actual losses.
+    compute_violations
+        Computes the number of violations of the VaR forecasts and compares
+        to the expected number of violations based on the chosen alpha.
+    loss_function
+        Computes the Q-measure which is a goodness of fit measure for the VaR forecasts.
+    """
     
     def __init__(self, compare_df_val, alpha):
         
@@ -317,6 +465,24 @@ class BacktestingEval:
             
 @timing_decorator           
 def garch_modelling(models, backtesting_start, estimation_start):
+    """
+    
+
+    Parameters
+    ----------
+    models : list
+        list of garch_models and labels.
+    backtesting_start : Str/Datetime
+        Start of backtesting window.
+    backtesting_end : Str/Datetime
+        End of backtesting window.
+
+    Returns
+    -------
+    model_dict : dict
+        dictionary with results of the model estimation.
+
+    """
     
     model_eval = {}
     predictions = {}
@@ -359,6 +525,34 @@ def garch_modelling(models, backtesting_start, estimation_start):
 
 
 class BacktestingGarch(Backtesting):
+    
+    """
+    A class used to represent backtesting of garch based VaRs.
+    
+    ----------------------------------------------------------------
+
+    Attributes
+    ----------
+    data : DataFrame
+        Dataframe of the price history of an asset
+    backtesting_start : Str/Datetime
+        Start of backtesting window.
+    backtesting_end : Str/Datetime
+        End of backtesting window.
+    investment : Int/float
+        Investment at start of backtesting window.
+    models : list
+        list of garch_models and labels.
+    modelling_results : dict
+        dictionary with results of the model estimation.
+        
+    Methods
+    -------
+    garch_var
+        Computes rolled VaR with the respective garch models.
+    compare_vars
+        compares value at risk with actual losses (percentage and value based).
+    """
     
     def __init__(self, data, backtesting_start, backtesting_end, investment, alpha, models, modelling_results):
         super(BacktestingGarch, self).__init__(data, backtesting_start, backtesting_end, investment, alpha)
